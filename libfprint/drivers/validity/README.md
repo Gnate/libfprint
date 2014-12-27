@@ -8,7 +8,7 @@ The following instructions were provided by [Pasquale 'sid' Fiorillo](http://blo
 What You'll need
 ----------------
 
-Grab the Dell Finger Print driver, [Validity-Sensor-Setup-4.4-100.00.x86_64.rpm](ftp://ftp.hp.com/pub/softpaq/sp57001-57500/sp57317.tar), for HP ProBook 4540s for Linux 64-bit.  That's right, this only works for Linux 64-bit.  This worked for my laptop even though it did not fit the description nor was there a download option for this driver for my laptop.
+Grab the Dell Finger Print driver, [Validity-Sensor-Setup-4.4-100.00.x86_64.rpm](ftp://ftp.hp.com/pub/softpaq/sp57001-57500/sp57317.tar) - ftp://ftp.hp.com/pub/softpaq/sp57001-57500/sp57317.tar, for HP ProBook 4540s for Linux 64-bit.  That's right, this only works for Linux 64-bit.  This worked for my laptop even though it did not fit the description nor was there a download option for this driver for my laptop.
 
 Depending on your distribution, you will need the `alien` conversion tool for converting RPM to DEB.
 
