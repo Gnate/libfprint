@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libfprint
+Description: Generic C API for fingerprint reader access
+Version: 0.5.1
+Libs: -L${libdir} -lfprint
+Cflags: -I${includedir}/libfprint
+

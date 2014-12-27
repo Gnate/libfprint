@@ -390,6 +390,7 @@ static struct fp_img_driver * const img_drivers[] = {
 	&fdu2000_driver,
 #endif
 	*/
+	&validity_driver,
 };
 
 static void register_drivers(void)
