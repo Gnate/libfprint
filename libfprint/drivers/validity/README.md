@@ -101,4 +101,9 @@ If everything is to your liking then install,
 
     sudo make install
 
+Updating PAM
+------------
 
+Update `/etc/pam.d/common-auth` with the following line inserted above `auth sufficient pam_unix.so`
+
+    auth    sufficient          pam_fprintd.so
