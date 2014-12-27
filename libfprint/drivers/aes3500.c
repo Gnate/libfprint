@@ -1,30 +1,33 @@
 /*
- * AuthenTec AES4000 driver for libfprint
+ * AuthenTec AES3500 driver for libfprint
  *
- * AES4000 is a press-typed sensor, which captures image in 96x96
+ * AES3500 is a press-typed sensor, which captures image in 128x128
  * pixels.
+ *
+ * Thanks Rafael Toledo for the Windows driver and the help.
  *
  * This work is derived from Daniel Drake's AES4000 driver.
  *
- * Copyright (C) 2013 Juvenn Woo <machese@gmail.com>
+ * Copyright (C) 2011-2013 Juvenn Woo <machese@gmail.com>
  * Copyright (C) 2007-2008 Daniel Drake <dsd@gentoo.org>
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
+ * This library is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of the
+ * License, or (at your option) any later version.
  *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA
  */
 
-#define FP_COMPONENT "aes4000"
+#define FP_COMPONENT "aes3500"
 
 #include <errno.h>
 
@@ -37,13 +40,13 @@
 #include "aes3k.h"
 #include "driver_ids.h"
 
-#define DATA_BUFLEN	0x1259
+#define DATA_BUFLEN	0x2089
 
 /* image size = FRAME_WIDTH x FRAME_WIDTH */
-#define FRAME_WIDTH 	96
+#define FRAME_WIDTH 	128
 #define FRAME_SIZE	(FRAME_WIDTH * AES3K_FRAME_HEIGHT / 2)
 #define FRAME_NUMBER	(FRAME_WIDTH / AES3K_FRAME_HEIGHT)
-#define ENLARGE_FACTOR 	3
+#define ENLARGE_FACTOR 	2
 
 
 static struct aes_regwrite init_reqs[] = {
@@ -99,9 +102,9 @@ static struct aes_regwrite init_reqs[] = {
 	{ 0x91, 0x1c }, /* set A/D reference high */
 	{ 0x92, 0x08 }, /* set A/D reference low */
 	{ 0x93, 0x00 }, /* set start row to 0 */
-	{ 0x94, 0x05 }, /* set end row to 5 */
+	{ 0x94, 0x07 }, /* set end row */
 	{ 0x95, 0x00 }, /* set start column to 0 */
-	{ 0x96, 0x18 }, /* set end column to 24*4=96 */
+	{ 0x96, 0x1f }, /* set end column */
 	{ 0x97, 0x04 }, /* data format and thresholds */
 	{ 0x98, 0x28 }, /* image data control */
 	{ 0x99, 0x00 }, /* disable general purpose outputs */
@@ -158,15 +161,15 @@ static void dev_deinit(struct fp_img_dev *dev)
 
 
 static const struct usb_id id_table[] = {
-	{ .vendor = 0x08ff, .product = 0x5501 },
+	{ .vendor = 0x08ff, .product = 0x5731 },
 	{ 0, 0, 0, },
 };
 
-struct fp_img_driver aes4000_driver = {
+struct fp_img_driver aes3500_driver = {
 	.driver = {
-		.id = AES4000_ID,
+		.id = AES3500_ID,
 		.name = FP_COMPONENT,
-		.full_name = "AuthenTec AES4000",
+		.full_name = "AuthenTec AES3500",
 		.id_table = id_table,
 		.scan_type = FP_SCAN_TYPE_PRESS,
 	},

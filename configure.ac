@@ -1,5 +1,5 @@
 AC_INIT([libfprint], [0.5.1])
-AM_INIT_AUTOMAKE([1.11 no-dist-gzip dist-xz check-news])
+AM_INIT_AUTOMAKE([1.11 no-dist-gzip dist-xz check-news subdir-objects])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([libfprint/core.c])
 AC_CONFIG_HEADERS([config.h])
@@ -23,11 +23,12 @@ AC_SUBST(lt_major)
 AC_SUBST(lt_revision)
 AC_SUBST(lt_age)
 
-all_drivers="upeke2 upekts upektc upeksonly vcom5s uru4000 fdu2000 aes1610 aes1660 aes2501 aes2550 aes2660 aes4000 vfs101 vfs301"
+all_drivers="upekts upektc upeksonly vcom5s uru4000 fdu2000 aes1610 aes1660 aes2501 aes2550 aes2660 aes3500 aes4000 vfs101 vfs301 upektc_img etes603"
 
 require_imaging='no'
 require_aeslib='no'
 require_aesX660='no'
+require_aes3k='no'
 enable_upeke2='no'
 enable_upekts='no'
 enable_upektc='no'
@@ -40,9 +41,12 @@ enable_aes1660='no'
 enable_aes2501='no'
 enable_aes2550='no'
 enable_aes2660='no'
+enable_aes3500='no'
 enable_aes4000='no'
 enable_vfs101='no'
 enable_vfs301='no'
+enable_upektc_img='no'
+enable_etes603='no'
 
 AC_ARG_WITH([drivers],[AS_HELP_STRING([--with-drivers],
 	[List of drivers to enable])],
@@ -111,10 +115,18 @@ for driver in `echo ${drivers} | sed -e 's/,/ /g' -e 's/,$//g'`; do
 			require_aesX660="yes"
 			enable_aes2660="yes"
 		;;
+		aes3500)
+			AC_DEFINE([ENABLE_AES3500], [], [Build AuthenTec AES3500 driver])
+			require_aeslib="yes"
+			require_imaging="yes"
+			require_aes3k="yes"
+			enable_aes3500="yes"
+		;;
 		aes4000)
 			AC_DEFINE([ENABLE_AES4000], [], [Build AuthenTec AES4000 driver])
 			require_aeslib="yes"
 			require_imaging="yes"
+			require_aes3k="yes"
 			enable_aes4000="yes"
 		;;
 		vfs101)
@@ -124,6 +136,14 @@ for driver in `echo ${drivers} | sed -e 's/,/ /g' -e 's/,$//g'`; do
 		vfs301)
 			AC_DEFINE([ENABLE_VFS301], [], [Build Validity VFS301/VFS300 driver])
 			enable_vfs301="yes"
+		;;
+		upektc_img)
+			AC_DEFINE([ENABLE_UPEKTC_IMG], [], [Build Upek TouchChip Fingerprint Coprocessor driver])
+			enable_upektc_img="yes"
+		;;
+		etes603)
+			AC_DEFINE([ENABLE_ETES603], [], [Build EgisTec ES603 driver])
+			enable_etes603="yes"
 		;;
 	esac
 done
@@ -140,11 +160,15 @@ AM_CONDITIONAL([ENABLE_AES1660], [test "$enable_aes1660" = "yes"])
 AM_CONDITIONAL([ENABLE_AES2501], [test "$enable_aes2501" = "yes"])
 AM_CONDITIONAL([ENABLE_AES2550], [test "$enable_aes2550" = "yes"])
 AM_CONDITIONAL([ENABLE_AES2660], [test "$enable_aes2660" = "yes"])
+AM_CONDITIONAL([ENABLE_AES3500], [test "$enable_aes3500" = "yes"])
 AM_CONDITIONAL([ENABLE_AES4000], [test "$enable_aes4000" = "yes"])
 AM_CONDITIONAL([REQUIRE_AESLIB], [test "$require_aeslib" = "yes"])
 AM_CONDITIONAL([REQUIRE_AESX660], [test "$require_aesX660" = "yes"])
+AM_CONDITIONAL([REQUIRE_AES3K], [test "$require_aes3k" = "yes"])
 AM_CONDITIONAL([ENABLE_VFS101], [test "$enable_vfs101" = "yes"])
 AM_CONDITIONAL([ENABLE_VFS301], [test "$enable_vfs301" = "yes"])
+AM_CONDITIONAL([ENABLE_UPEKTC_IMG], [test "$enable_upektc_img" = "yes"])
+AM_CONDITIONAL([ENABLE_ETES603], [test "$enable_etes603" = "yes"])
 
 
 PKG_CHECK_MODULES(LIBUSB, [libusb-1.0 >= 0.9.1])
@@ -160,8 +184,7 @@ PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-imagemagick_found=no
-gdkpixbuf_found=no
+pixman_found=no
 
 AC_ARG_ENABLE(udev-rules,
 	AC_HELP_STRING([--enable-udev-rules],[Update the udev rules]),
@@ -189,20 +212,13 @@ AC_MSG_NOTICE([installing udev rules in ${ac_with_udev_rules_dir}])
 AC_SUBST([udev_rulesdir],[${ac_with_udev_rules_dir}])
 
 if test "$require_imaging" = "yes"; then
-	PKG_CHECK_MODULES(IMAGING, gthread-2.0 gdk-pixbuf-2.0, [gdkpixbuf_found=yes], [gdkpixbuf_found=no])
-	if test "$gdkpixbuf_found" != "yes"; then
-		PKG_CHECK_MODULES(IMAGING, ImageMagick, [imagemagick_found=yes], [imagemagick_found=no])
+	PKG_CHECK_MODULES(IMAGING, pixman-1, [pixman_found=yes], [pixman_found=no])
+	if test "$pixman_found" != "yes"; then
+		AC_MSG_ERROR([pixman is required for imaging support])
 	fi
 fi
 
-if test "$require_imaging" = "yes"; then
-	if test "$gdkpixbuf_found" != "yes" && test "$imagemagick_found" != "yes"; then
-		AC_MSG_ERROR([gdk-pixbuf or ImageMagick is required for imaging support])
-	fi
-fi
-
-AM_CONDITIONAL([REQUIRE_GDKPIXBUF], [test "$gdkpixbuf_found" = "yes"])
-AM_CONDITIONAL([REQUIRE_IMAGEMAGICK], [test "$imagemagick_found" = "yes"])
+AM_CONDITIONAL([REQUIRE_PIXMAN], [test "$pixman_found" = "yes"])
 AC_SUBST(IMAGING_CFLAGS)
 AC_SUBST(IMAGING_LIBS)
 
@@ -272,10 +288,8 @@ AM_CFLAGS="-std=gnu99 $inline_cflags -Wall -Wundef -Wunused -Wstrict-prototypes 
 AC_SUBST(AM_CFLAGS)
 
 if test "$require_imaging" = "yes"; then
-	if test x$gdkpixbuf_found != no; then
-		AC_MSG_NOTICE([** Using gdk-pixbuf for imaging])
-	else
-		AC_MSG_NOTICE([** Using ImageMagick for imaging])
+	if test x$pixman_found != no; then
+		AC_MSG_NOTICE([** Using pixman for imaging])
 	fi
 else
 	AC_MSG_NOTICE([   Imaging support disabled])
@@ -341,6 +355,11 @@ if test x$enable_aes2660 != xno ; then
 else
 	AC_MSG_NOTICE([   aes2660 driver disabled])
 fi
+if test x$enable_aes3500 != xno ; then
+	AC_MSG_NOTICE([** aes3500 driver enabled])
+else
+	AC_MSG_NOTICE([   aes3500 driver disabled])
+fi
 if test x$enable_aes4000 != xno ; then
 	AC_MSG_NOTICE([** aes4000 driver enabled])
 else
@@ -356,6 +375,16 @@ if test x$enable_vfs301 != xno ; then
 else
 	AC_MSG_NOTICE([   vfs301 driver disabled])
 fi
+if test x$enable_upektc_img != xno ; then
+	AC_MSG_NOTICE([** upektc_img driver enabled])
+else
+	AC_MSG_NOTICE([   upektc_img driver disabled])
+fi
+if test x$enable_etes603 != xno ; then
+	AC_MSG_NOTICE([** etes603 driver enabled])
+else
+	AC_MSG_NOTICE([   etes603 driver disabled])
+fi
 if test x$require_aeslib != xno ; then
 	AC_MSG_NOTICE([** aeslib helper functions enabled])
 else
@@ -365,6 +394,11 @@ if test x$require_aesX660 != xno ; then
 	AC_MSG_NOTICE([** aesX660 common routines enabled])
 else
 	AC_MSG_NOTICE([   aesX660 common routines disabled])
+fi
+if test x$require_aes3k != xno ; then
+	AC_MSG_NOTICE([** aes3k common routines enabled])
+else
+	AC_MSG_NOTICE([   aes3k common routines disabled])
 fi
 
 AC_CONFIG_FILES([libfprint.pc] [Makefile] [libfprint/Makefile] [examples/Makefile] [doc/Makefile])

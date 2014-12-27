@@ -48,7 +48,6 @@
 
 enum {
         UPEKE2_2016,
-        UPEKE2_2020,
 };
 
 struct upeke2_dev {
@@ -856,9 +855,6 @@ static int discover(struct libusb_device_descriptor *dsc, uint32_t *devtype)
 	if (dsc->idProduct == 0x2016 && dsc->bcdDevice == 2)
 		return 1;
 
-	if (dsc->idProduct == 0x2020 && dsc->bcdDevice == 1)
-		return 1;
-
 	return 0;
 }
 
@@ -1076,6 +1072,7 @@ static void e_handle_resp02(struct fp_dev *dev, unsigned char *data,
 	size_t data_len)
 {
 	struct fp_print_data *fdata = NULL;
+	struct fp_print_data_item *item = NULL;
 	int result = -EPROTO;
 
 	if (data_len < sizeof(scan_comp)) {
@@ -1084,9 +1081,11 @@ static void e_handle_resp02(struct fp_dev *dev, unsigned char *data,
 		fp_err("unrecognised data prefix %x %x %x %x %x",
 			data[0], data[1], data[2], data[3], data[4]);
 	} else {
-		fdata = fpi_print_data_new(dev, data_len - sizeof(scan_comp));
-		memcpy(fdata->data, data + sizeof(scan_comp),
+		fdata = fpi_print_data_new(dev);
+		item = fpi_print_data_item_new(data_len - sizeof(scan_comp));
+		memcpy(item->data, data + sizeof(scan_comp),
 			data_len - sizeof(scan_comp));
+		fdata->prints = g_slist_prepend(fdata->prints, item);
 
 		result = FP_ENROLL_COMPLETE;
 	}
@@ -1248,12 +1247,13 @@ static void verify_start_sm_run_state(struct fpi_ssm *ssm)
 		break;
 	case VERIFY_INIT: ;
 		struct fp_print_data *print = dev->verify_data;
-		size_t data_len = sizeof(verify_hdr) + print->length;
+		struct fp_print_data_item *item = print->prints->data;
+		size_t data_len = sizeof(verify_hdr) + item->length;
 		unsigned char *data = g_malloc(data_len);
 		struct libusb_transfer *transfer;
 
 		memcpy(data, verify_hdr, sizeof(verify_hdr));
-		memcpy(data + sizeof(verify_hdr), print->data, print->length);
+		memcpy(data + sizeof(verify_hdr), item->data, item->length);
 		transfer = alloc_send_cmd28_transfer(dev, 0x03, data, data_len,
 			verify_init_2803_cb, ssm);
 		g_free(data);
@@ -1461,7 +1461,6 @@ static int verify_stop(struct fp_dev *dev, gboolean iterating)
 
 static const struct usb_id id_table[] = {
 	{ .vendor = 0x147e, .product = 0x2016, .driver_data = UPEKE2_2016 },
-	{ .vendor = 0x147e, .product = 0x2020, .driver_data = UPEKE2_2020 },
 	{ 0, 0, 0, }, /* terminating entry */
 };
 
